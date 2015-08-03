@@ -18,4 +18,5 @@ class FPR(object):
 
         self.FVDL = project['audit.fvdl'].getroot()
         self.Audit = project['audit.xml'].getroot()
-        self.FilterTemplate = project['filtertemplate.xml'].getroot()
+	if 'filtertemplate.xml' in project:
+		self.FilterTemplate = project['filtertemplate.xml'].getroot()

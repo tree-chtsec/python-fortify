@@ -4,3 +4,4 @@ fortify
 
 '''
 from .fpr import FPR
+from .issue import Issue

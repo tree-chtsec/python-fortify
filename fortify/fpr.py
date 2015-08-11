@@ -18,5 +18,11 @@ class FPR(object):
 
         self.FVDL = project['audit.fvdl'].getroot()
         self.Audit = project['audit.xml'].getroot()
-	if 'filtertemplate.xml' in project:
-		self.FilterTemplate = project['filtertemplate.xml'].getroot()
+        self.FilterTemplate=None
+
+        if 'filtertemplate.xml' in project:
+            self.FilterTemplate = project['filtertemplate.xml'].getroot()
+
+        self.ExternalMetadata=None
+        if 'externalmetadata.xml' in project:
+            self.ExternalMetadata = project['externalmetadata.xml'].getroot()

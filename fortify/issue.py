@@ -65,12 +65,12 @@ class Issue:
             if prob is not None:
                 self.metadata['probability'] = Decimal(prob.pyval)
         # /f:FVDL/f:Vulnerabilities/f:Vulnerability[2]/f:AnalysisInfo/f:Unified/f:Context
-        if hasattr(vulnerability.AnalysisInfo.Unified.Context, 'ReplacementDefinitions'):
-            child = vulnerability.AnalysisInfo.Unified.Context.ReplacementDefinitions
-            for thisdef in vulnerability.AnalysisInfo.Unified.Context.ReplacementDefinitions.Def:
-                if 'PrimaryLocation.file' in thisdef.attrib:
+        if hasattr(vulnerability.AnalysisInfo.Unified, 'ReplacementDefinitions'):
+            child = vulnerability.AnalysisInfo.Unified.ReplacementDefinitions
+            for thisdef in child.Def:
+                if thisdef.attrib['key'] == 'PrimaryLocation.file':
                     self.metadata['shortfile'] = thisdef.attrib['value']
-                elif 'PrimaryLocation.line' in thisdef.attrib:
+                elif thisdef.attrib['key'] == 'PrimaryLocation.line':
                     self.metadata['line'] = thisdef.attrib['value']
 
         if hasattr(vulnerability.AnalysisInfo.Unified.Context, 'FunctionDeclarationSourceLocation'):

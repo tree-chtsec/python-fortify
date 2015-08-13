@@ -1,6 +1,6 @@
-from fortify import FPR, Issue, Project, ProjectFactory
 import argparse
-import sys
+
+from fortify import ProjectFactory
 
 parser = argparse.ArgumentParser("Print statistics from a Fortify FPR file")
 parser.add_argument("-f", "--file", dest="fprfile", required=True,

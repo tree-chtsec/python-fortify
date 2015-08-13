@@ -47,7 +47,7 @@ class FortifyObjectifiedDataElement(ObjectifiedDataElement):
 
 class FVDLElement(FortifyObjectifiedDataElement):
     def get_vulnerabilities(self):
-        return self.Vulnerabilities.Vulnerability
+        return self.Vulnerabilities.Vulnerability if hasattr(self.Vulnerabilities, 'Vulnerability') else []
 
 
 class DateTimeElement(FortifyObjectifiedDataElement):

@@ -91,11 +91,12 @@ class Issue:
 
         if hasattr(vulnerability.AnalysisInfo.Unified.Context, 'Function'):
             child = vulnerability.AnalysisInfo.Unified.Context.Function
-            self.metadata['package'] = child.attrib['namespace']
-            self.metadata['class'] = child.attrib['enclosingClass']
+            # namespace not always populated for some reason
+            self.metadata['package'] = child.attrib['namespace'] if 'namespace' in child.attrib else None
+            self.metadata['class'] = child.attrib['enclosingClass'] if 'enclosingClass' in child.attrib else None
         elif hasattr(vulnerability.AnalysisInfo.Unified.Context, 'ClassIdent'):
             child = vulnerability.AnalysisInfo.Unified.Context.ClassIdent
-            self.metadata['package'] = child.attrib['namespace']
+            self.metadata['package'] = child.attrib['namespace'] if 'namespace' in child.attrib else None
             self.metadata['class'] = None
         else:
             # Fortify builds a package name even in this case. Not sure what data it uses from FVDL.

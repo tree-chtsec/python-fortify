@@ -84,6 +84,10 @@ class Project:
     def get_issue(self, id):
         return self._issues[id]
 
+    def print_project_info(self):
+        # TODO: print an overview of the project information (name, etc.) and scan information
+        return
+
     def print_vuln_counts(self):
         vuln_counts = {'Critical': 0,
                         'High': 0,
@@ -101,7 +105,7 @@ class Project:
         print "Critical, High, Medium, Low"
         print "%d, %d, %d, %d" % (vuln_counts['Critical'], vuln_counts['High'], vuln_counts['Medium'], vuln_counts['Low'])
 
-    def print_vulns(self):
+    def print_vuln_summaries(self):
         print "file_line, line, id, kingdom, type_subtype, severity, nai, filtered, suppressed"
         for i in self._issues.itervalues():
             print "%s:%s, %s, %s, %s, %s: %s, %s, NAI (%s), %s, Suppressed (%s)" % \

@@ -1,16 +1,29 @@
 from fortify import FPR, Issue, Project, ProjectFactory
+import argparse
 import sys
 
-if len(sys.argv) == 1:
-	print "Usage:  sys.argv[0] <fpr file>"
-	sys.exit(-1)
+parser = argparse.ArgumentParser("Print statistics from a Fortify FPR file")
+parser.add_argument("-f", "--file", dest="fprfile", required=True,
+                  help="generate stats for FPR", metavar="FPR")
+parser.add_argument("-p", "--project_info", default=False,
+                  action="store_true", dest="print_project_info",
+                  help="print project and scan info")
+parser.add_argument("-c", "--vuln_counts",
+                  action="store_true", dest="print_vuln_counts", default=False,
+                  help="print vulnerabilities as CSV output")
+parser.add_argument("-s", "--vuln_summaries",
+                  action="store_true", dest="print_vuln_summaries", default=False,
+                  help="print vulnerability details as CSV output")
 
-fpr = sys.argv[1]
+args = parser.parse_args()
 
-fprfile = FPR(fpr)
+project = ProjectFactory.create_project(args.fprfile)
 
-project = ProjectFactory.create_project(fpr)
+if args.print_project_info:
+    project.print_project_info()
 
-project.print_vuln_counts()
-# TODO: make this optional
-project.print_vulns()
+if args.print_vuln_counts:
+    project.print_vuln_counts()
+
+if args.print_vuln_summaries:
+    project.print_vuln_summaries()

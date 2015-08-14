@@ -4,5 +4,5 @@ fortify
 
 '''
 from .fpr import FPR
-from .issue import Issue
+from .issue import Issue, RemovedIssue
 from .project import Project, ProjectFactory

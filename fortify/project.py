@@ -1,4 +1,4 @@
-from . import FPR, Issue
+from . import FPR, Issue, RemovedIssue
 
 # configures fortify project objects
 class ProjectFactory:
@@ -45,10 +45,17 @@ class ProjectFactory:
 
             project.add_or_update_issue(i)  # add it back in to replace the previous one
 
+        # now, add information about removed issues
+        if hasattr(fpr.Audit, 'IssueList') and hasattr(fpr.Audit.IssueList, 'RemovedIssue'):
+            for removed in fpr.Audit.IssueList.RemovedIssue:
+                ri = RemovedIssue.from_auditxml(removed)
+                project.add_or_update_issue(ri)
+
+        removedissues = [i for i in issues.values() if i.removed]
         suppressedissues = [i for i in issues.values() if i.suppressed]
         hiddenissues = [i for i in issues.values() if i.hidden]
         naiissues = [i for i in issues.values() if i.is_NAI()]
-        print "Got [%d] issues, [%d] hidden, [%d] NAI, [%d] Suppressed" % (len(issues), len(hiddenissues), len(naiissues), len(suppressedissues))
+        print "Got [%d] issues, [%d] hidden, [%d] NAI, [%d] Suppressed, [%d] Removed" % (len(issues), len(hiddenissues), len(naiissues), len(suppressedissues), len(removedissues))
 
         return project  # A fortify project, containing one or more issues, with metadata
 
@@ -106,10 +113,10 @@ class Project:
         print "%d, %d, %d, %d" % (vuln_counts['Critical'], vuln_counts['High'], vuln_counts['Medium'], vuln_counts['Low'])
 
     def print_vuln_summaries(self):
-        print "file_line, path, id, kingdom, type_subtype, severity, nai, filtered, suppressed"
+        print "file_line, path, id, kingdom, type_subtype, severity, nai, filtered, suppressed, removed"
         for i in self._issues.itervalues():
-            print "%s:%s, %s, %s, %s, %s: %s, %s, NAI (%s), %s, Suppressed (%s)" % \
-                  (i.metadata['shortfile'], i.metadata['line'], i.metadata['file'], i.id, i.kingdom, i.type, i.subtype, i.risk, i.is_NAI(), "H" if i.hidden else "V", i.suppressed)
+            print "%s:%s, %s, %s, %s, %s, %s, NAI (%s), %s, Suppressed (%s), Removed (%s)" % \
+                  (i.metadata['shortfile'], i.metadata['line'], i.metadata['file'], i.id, i.kingdom, i.category, i.risk, i.is_NAI(), "H" if i.hidden else "V", i.suppressed, i.removed)
 
     def get_fpr(self):
         return self._fpr

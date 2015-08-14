@@ -10,7 +10,6 @@ class Issue:
         self.type = type
         self.subtype = subtype
         self.suppressed = False
-        self.hidden = False
         self.metadata = {}
 
     # Factory method to create an instance from a vulnerability XML object directly
@@ -38,12 +37,26 @@ class Issue:
             self.metadata['remediation effort'] = Decimal(self.metadata['RemediationEffort'])
 
     @property
+    def category(self):
+        # returns a combination of type and subtype, or just type if that's all we have
+        return self.type + ':' + self.subtype if self.subtype is not None else self.type
+
+    @property
     def analysis(self):
         return self.metadata['analysis'] if 'analysis' in self.metadata else None
 
     @analysis.setter
     def analysis(self, analysis):
         self.metadata['analysis'] = analysis
+
+    @property
+    def hidden(self):
+        # TODO: determine who should own issue visibility, especially since that can change by filters
+        return self.removed;
+
+    @property
+    def removed(self):
+       return 'analyzer' in self.metadata and self.metadata['analyzer'] == 'RemovedIssue'
 
     @property
     def suppressed(self):
@@ -88,6 +101,10 @@ class Issue:
                 self.metadata['shortfile'] = os.path.basename(child.attrib['path'])
             if 'line' not in self.metadata:
                 self.metadata['line'] = child.attrib['line']
+
+        self.metadata['category'] = self.category
+        self.metadata['type'] = self.type
+        self.metadata['subtype'] = self.subtype
 
         if hasattr(vulnerability.AnalysisInfo.Unified.Context, 'Function'):
             child = vulnerability.AnalysisInfo.Unified.Context.Function
@@ -136,3 +153,34 @@ class Issue:
             criticality = 'Low'
 
         return criticality
+
+class RemovedIssue(Issue):
+    @classmethod
+    def from_auditxml(cls, removed):
+        type_subtype = cls._split_type_subtype(removed.Category)
+        instance = cls(removed.attrib['instanceId'], None,
+                       'Unknown - Custom Issue', type_subtype[0],
+                       type_subtype[1] if len(type_subtype) == 2 else None)
+        instance._build_removed_metadata(removed)
+        return instance
+
+    @classmethod
+    def _split_type_subtype(cls, category):
+        # removed issues have a single field with combined type/subtype (or not) so this splits those back out
+        pieces = category.text.split(':')
+        return pieces
+
+    def _build_removed_metadata(self, removed):
+        self.metadata['analyzer'] = 'RemovedIssue'
+        self.metadata['category'] = self.category
+        self.metadata['type'] = self.type
+        self.metadata['subtype'] = self.subtype
+
+        self.metadata['file'] = removed.File.text
+        self.metadata['shortfile'] = os.path.basename(removed.File.text)
+        self.metadata['line'] = removed.Line
+        self.metadata['confidence'] = Decimal(removed.Confidence.pyval)
+        self.metadata['severity'] = Decimal(removed.Severity.pyval)
+        self.metadata['probability'] = Decimal(removed.Probability.pyval)
+        self.metadata['accuracy'] = Decimal(removed.Accuracy.pyval)
+        self.metadata['impact'] = Decimal(removed.Impact.pyval)

@@ -130,14 +130,15 @@ class FilterQuery:
             # value for lookup.  This appears to be "altcategory" prefixing one of the Shortcut values from the
             # externalmetadata definitions: <Shortcut>OWASP2013</Shortcut>  So, we have to map one to the other for
             # lookups
-            metadata_element_shortcuts = fpr.ExternalMetadata.get_shortcuts_for_name(self._metadata_element)
-            if len(metadata_element_shortcuts) > 0:
-                # we found shortcuts for this name, which means it's a metadata category name. Store all variations for
-                # matches in the future, prefixed with "altcategory" (but none have spaces, so excluding those)
-                self._metadata_element_shortcuts = []
-                for s in metadata_element_shortcuts:
-                    if ' ' not in s:
-                        self._metadata_element_shortcuts.append("altcategory" + s)
+            if fpr.ExternalMetadata is not None:
+                metadata_element_shortcuts = fpr.ExternalMetadata.get_shortcuts_for_name(self._metadata_element)
+                if len(metadata_element_shortcuts) > 0:
+                    # we found shortcuts for this name, which means it's a metadata category name. Store all variations for
+                    # matches in the future, prefixed with "altcategory" (but none have spaces, so excluding those)
+                    self._metadata_element_shortcuts = []
+                    for s in metadata_element_shortcuts:
+                        if ' ' not in s:
+                            self._metadata_element_shortcuts.append("altcategory" + s)
 
     def _evaluate_one(self, metadata_element, metadata):
         # This understands a limited set of Fortify's query language.  To really support this would take

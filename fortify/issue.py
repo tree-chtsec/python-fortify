@@ -39,7 +39,7 @@ class Issue:
     @property
     def category(self):
         # returns a combination of type and subtype, or just type if that's all we have
-        return self.type + ':' + self.subtype if self.subtype is not None else self.type
+        return self.type + ': ' + self.subtype if self.subtype is not None else self.type
 
     @property
     def analysis(self):

@@ -113,9 +113,9 @@ class Project:
         print "%d, %d, %d, %d" % (vuln_counts['Critical'], vuln_counts['High'], vuln_counts['Medium'], vuln_counts['Low'])
 
     def print_vuln_summaries(self):
-        print "file_line, path, id, kingdom, type_subtype, severity, nai, filtered, suppressed, removed"
+        print "file_line,path,id,kingdom,type_subtype,severity,nai,filtered,suppressed,removed"
         for i in self._issues.itervalues():
-            print "%s:%s, %s, %s, %s, %s, %s, NAI (%s), %s, Suppressed (%s), Removed (%s)" % \
+            print "%s:%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % \
                   (i.metadata['shortfile'], i.metadata['line'], i.metadata['file'], i.id, i.kingdom, i.category, i.risk, i.is_NAI(), "H" if i.hidden else "V", i.suppressed, i.removed)
 
     def get_fpr(self):

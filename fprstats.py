@@ -15,6 +15,9 @@ parser.add_argument("-c", "--vuln_counts",
 parser.add_argument("-s", "--vuln_summaries",
                   action="store_true", dest="print_vuln_summaries", default=False,
                   help="print vulnerability details as CSV output")
+parser.add_argument("--high_priority_only",
+                    action="store_true", dest="print_high_priority_only", default=False,
+                    help="For vulnerability summaries: Filters only High Priority relevant issues, which includes Critical/High and excludes anything suppressed, removed, hidden, NAI")
 
 args = parser.parse_args()
 
@@ -27,4 +30,4 @@ if args.print_vuln_counts:
     project.print_vuln_counts()
 
 if args.print_vuln_summaries:
-    project.print_vuln_summaries()
+    project.print_vuln_summaries(args.print_high_priority_only)

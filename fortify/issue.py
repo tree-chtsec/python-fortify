@@ -154,6 +154,17 @@ class Issue:
 
         return criticality
 
+    @property
+    def is_open_high_priority(self):
+        # encapsulates the logic of whether a finding is open and high priority
+        risk = self.risk
+        pci_relevant = (risk == 'Critical' or risk == 'High') \
+                       and not self.is_NAI() \
+                       and not self.removed \
+                       and not self.suppressed \
+                       and not self.hidden
+        return pci_relevant
+
 class RemovedIssue(Issue):
     @classmethod
     def from_auditxml(cls, removed):

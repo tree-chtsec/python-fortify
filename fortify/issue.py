@@ -77,25 +77,26 @@ class Issue:
             prob = vulnerability.InstanceInfo.MetaInfo.find("./x:Group[@name='Probability']", namespaces={'x':'xmlns://www.fortifysoftware.com/schema/fvdl'})
             if prob is not None:
                 self.metadata['probability'] = Decimal(prob.pyval)
+
         # /f:FVDL/f:Vulnerabilities/f:Vulnerability[2]/f:AnalysisInfo/f:Unified/f:Context
-        if hasattr(vulnerability.AnalysisInfo.Unified, 'ReplacementDefinitions'):
+        if hasattr(vulnerability.AnalysisInfo.Unified, "Trace") and hasattr(vulnerability.AnalysisInfo.Unified.Trace.Primary.Entry, "Node"):
+            # This is more consistent with what Fortify shows, if available
+            child = vulnerability.AnalysisInfo.Unified.Trace.Primary.Entry.Node.SourceLocation
+            self.metadata['file'] = child.attrib['path']
+            if 'shortfile' not in self.metadata:
+                self.metadata['shortfile'] = os.path.basename(child.attrib['path'])
+            if 'line' not in self.metadata:
+                self.metadata['line'] = child.attrib['line']
+        elif hasattr(vulnerability.AnalysisInfo.Unified, 'ReplacementDefinitions'):
             child = vulnerability.AnalysisInfo.Unified.ReplacementDefinitions
             for thisdef in child.Def:
                 if thisdef.attrib['key'] == 'PrimaryLocation.file':
                     self.metadata['shortfile'] = thisdef.attrib['value']
                 elif thisdef.attrib['key'] == 'PrimaryLocation.line':
                     self.metadata['line'] = thisdef.attrib['value']
-
+                    
         if hasattr(vulnerability.AnalysisInfo.Unified.Context, 'FunctionDeclarationSourceLocation'):
             child = vulnerability.AnalysisInfo.Unified.Context.FunctionDeclarationSourceLocation
-            self.metadata['file'] = child.attrib['path']
-            if 'shortfile' not in self.metadata:
-                self.metadata['shortfile'] = os.path.basename(child.attrib['path'])
-            if 'line' not in self.metadata:
-                self.metadata['line'] = child.attrib['line']
-        else:
-            # attempt this.  Is this more consistent?
-            child = vulnerability.AnalysisInfo.Unified.Trace.Primary.Entry.Node.SourceLocation
             self.metadata['file'] = child.attrib['path']
             if 'shortfile' not in self.metadata:
                 self.metadata['shortfile'] = os.path.basename(child.attrib['path'])

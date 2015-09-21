@@ -66,8 +66,16 @@ class Project:
         self._issues = {}
 
         # set project properties
-        self.ProjectName=fpr.Audit.ProjectInfo.Name
-        self.ProjectVersionId=fpr.Audit.ProjectInfo.ProjectVersionId
+        if hasattr(fpr.Audit.ProjectInfo, 'Name'):
+            self.ProjectName=fpr.Audit.ProjectInfo.Name
+        else:
+            self.ProjectName=None
+
+        if hasattr(fpr.Audit.ProjectInfo, 'ProjectVersionId'):
+            self.ProjectVersionId=fpr.Audit.ProjectInfo.ProjectVersionId
+        else:
+            self.ProjectVersionId=None
+
         for loc in fpr.FVDL.Build.LOC:
             if loc.attrib['type'] == 'Fortify':
                 self.ScannedELOC=loc.text

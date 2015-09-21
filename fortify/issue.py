@@ -94,7 +94,7 @@ class Issue:
                     self.metadata['shortfile'] = thisdef.attrib['value']
                 elif thisdef.attrib['key'] == 'PrimaryLocation.line':
                     self.metadata['line'] = thisdef.attrib['value']
-                    
+
         if hasattr(vulnerability.AnalysisInfo.Unified.Context, 'FunctionDeclarationSourceLocation'):
             child = vulnerability.AnalysisInfo.Unified.Context.FunctionDeclarationSourceLocation
             self.metadata['file'] = child.attrib['path']

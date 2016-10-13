@@ -212,7 +212,7 @@ class FilterTemplateElement(FortifyObjectifiedDataElement):
         # TODO: could allow caller to specify which filterset to use to toggle views of data
         default_filter_set = self.find(".//FilterSet[@enabled='true']")
         if default_filter_set is None:
-            print "Warning: no default filterset found!"
+            eprint("Warning: no default filterset found!")
 
         return default_filter_set
 

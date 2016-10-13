@@ -1,4 +1,9 @@
+from __future__ import print_function
 from . import FPR, Issue, RemovedIssue
+import sys
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 # configures fortify project objects
 class ProjectFactory:
@@ -55,7 +60,7 @@ class ProjectFactory:
         suppressedissues = [i for i in issues.values() if i.suppressed]
         hiddenissues = [i for i in issues.values() if i.hidden]
         naiissues = [i for i in issues.values() if i.is_NAI()]
-        print "Got [%d] issues, [%d] hidden, [%d] NAI, [%d] Suppressed, [%d] Removed" % (len(issues), len(hiddenissues), len(naiissues), len(suppressedissues), len(removedissues))
+        eprint("Got [%d] issues, [%d] hidden, [%d] NAI, [%d] Suppressed, [%d] Removed" % (len(issues), len(hiddenissues), len(naiissues), len(suppressedissues), len(removedissues)))
 
         return project  # A fortify project, containing one or more issues, with metadata
 
@@ -113,20 +118,20 @@ class Project:
             # exclude hidden, NAI and suppressed (TODO: could be configurable)
             if not (i.hidden or i.is_NAI() or i.suppressed):
                 if i.risk is None:
-                    print "Risk calculation error for issue [%s]" % i.id
+                    eprint("Risk calculation error for issue [%s]" % i.id)
                 else:
                     vuln_counts[i.risk] += 1
 
-        print "Critical, High, Medium, Low"
-        print "%d, %d, %d, %d" % (vuln_counts['Critical'], vuln_counts['High'], vuln_counts['Medium'], vuln_counts['Low'])
+        print("Critical, High, Medium, Low")
+        print("%d, %d, %d, %d" % (vuln_counts['Critical'], vuln_counts['High'], vuln_counts['Medium'], vuln_counts['Low']))
 
     def print_vuln_summaries(self, open_high_priority):
         # TODO: enable sorting by severity and file_line by default.
-        print "file_line,path,id,kingdom,type_subtype,severity,nai,filtered,suppressed,removed"
+        print("file_line,path,id,kingdom,type_subtype,severity,nai,filtered,suppressed,removed")
         for i in self._issues.itervalues():
             if not open_high_priority or i.is_open_high_priority:
-                print "%s:%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % \
-                      (i.metadata['shortfile'], i.metadata['line'], i.metadata['file'], i.id, i.kingdom, i.category, i.risk, i.is_NAI(), "H" if i.hidden else "V", i.suppressed, i.removed)
+                print("%s:%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % \
+                      (i.metadata['shortfile'], i.metadata['line'], i.metadata['file'], i.id, i.kingdom, i.category, i.risk, i.is_NAI(), "H" if i.hidden else "V", i.suppressed, i.removed))
 
     def get_fpr(self):
         return self._fpr

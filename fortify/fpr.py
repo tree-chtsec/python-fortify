@@ -8,6 +8,9 @@ from .utils import openfpr
 
 
 class FPR(object):
+
+    cache = {}
+
     def __init__(self, project, **kwargs):
         if isinstance(project, basestring):
             self._project = project = openfpr(project)
@@ -17,12 +20,17 @@ class FPR(object):
             raise TypeError
 
         self.FVDL = project['audit.fvdl'].getroot()
+        self.cache[self.FVDL] = list(self.FVDL.iter())
         self.Audit = project['audit.xml'].getroot()
+        self.cache[self.Audit] = list(self.Audit.iter())
+
         self.FilterTemplate=None
 
         if 'filtertemplate.xml' in project:
             self.FilterTemplate = project['filtertemplate.xml'].getroot()
+            #self.cache[self.FilterTemplate] = list(self.FilterTemplate.iter())
 
         self.ExternalMetadata=None
         if 'externalmetadata.xml' in project:
             self.ExternalMetadata = project['externalmetadata.xml'].getroot()
+            #self.cache[self.ExternalMetadata] = list(self.ExternalMetadata.iter())

@@ -9,6 +9,8 @@ from lxml import objectify
 from zipfile import ZipFile
 import logging
 
+logger = logging.getLogger(__name__)
+
 from .fvdl import AuditParser, FilterTemplateParser, FVDLParser
 from .externalmetadata import ExternalMetadataParser
 
@@ -39,9 +41,10 @@ def openfpr(fprfile):
     for filename in (f for f in zfpr.namelist() if f in XML_PARSERS):
         parser = XML_PARSERS.get(filename)
         artifact = zfpr.open(filename)
-        logging.debug("Parsing %s w/parser %r", filename, parser)
+        logger.debug("Parsing %s w/parser %r", filename, parser)
         # index by filename only, not folder
         filename = os.path.basename(filename)
         pkg[filename] = objectify.parse(artifact, parser=parser)
 
+    logger.debug("Done parsing files from FPR")
     return pkg

@@ -14,6 +14,27 @@ import datetime
 import dateutil.parser
 import uuid
 import re
+import logging
+
+logger = logging.getLogger(__name__)
+
+# https://stackoverflow.com/a/6849299/630705
+class lazyproperty(object):
+    '''
+    meant to be used for lazy evaluation of an object attribute.
+    property should represent non-mutable data, as it replaces itself.
+    '''
+
+    def __init__(self,fget):
+        self.fget = fget
+        self.func_name = fget.__name__
+
+    def __get__(self,obj,cls):
+        if obj is None:
+            return None
+        value = self.fget(obj)
+        setattr(obj,self.func_name,value)
+        return value
 
 AuditParser = objectify.makeparser(ns_clean=True,
                                    remove_blank_text=True,
@@ -49,6 +70,25 @@ class FVDLElement(FortifyObjectifiedDataElement):
     def get_vulnerabilities(self):
         return self.Vulnerabilities.Vulnerability if hasattr(self.Vulnerabilities, 'Vulnerability') else []
 
+class AuditElement(FortifyObjectifiedDataElement):
+
+    issue_analysisInfo_lookup = {}
+
+    # Build a lookup dictionary to speed up resolving the analysis lookups that otherwise take a considerable amount of time doing xpath
+    def build_issue_analysis_lookup(self):
+        for issue in self.IssueList.iter("{xmlns://www.fortify.com/schema/audit}Issue"):
+            # The analysis tag ID depends on the project template but hard-coding
+            # for now should be reasonably safe since this is the default tag ID for analysis issues.
+            analysis = issue.find(
+                './ns2:Tag[@id=\'87f2364f-dcd4-49e6-861d-f8d3f351686b\']/ns2:Value', namespaces={'ns2': 'xmlns://www.fortify.com/schema/audit'})
+            analysisInfo = {}
+            analysisInfo['analysis'] = analysis.text if analysis is not None else None
+            analysisInfo['suppressed'] = True if 'suppressed' in issue.attrib and issue.attrib['suppressed'] == 'true' else False
+
+            self.issue_analysisInfo_lookup[issue.attrib['instanceId']] = analysisInfo
+
+    def get_issue_analysis(self, instanceId):
+        return self.issue_analysisInfo_lookup[instanceId] if instanceId in self.issue_analysisInfo_lookup else None
 
 class DateTimeElement(FortifyObjectifiedDataElement):
     def __repr__(self):
@@ -91,13 +131,24 @@ class UUIDElement(FortifyObjectifiedDataElement):
     def uuid(self):
         return uuid.UUID(str(self))
 
+class RuleInfoElement(FortifyObjectifiedDataElement):
+
+    rules = {}
+
+    def _init(self):
+        # build a quicker rule lookup to avoid lots of xpath queries
+        for rule in self.iter("{xmlns://www.fortifysoftware.com/schema/fvdl}Rule"):
+            self.rules[rule.attrib['id']] = rule
+
+    def get_rule(self, ruleId):
+        return self.rules[ruleId] if ruleId in self.rules else None
 
 class RuleElement(FortifyObjectifiedDataElement):
     @property
     def id(self):
         return self.attrib['id']
 
-    @property
+    @lazyproperty
     def metadata(self):
         metadata = {}
         for group in self.MetaInfo.Group:
@@ -173,7 +224,6 @@ class FilterQuery:
         return is_filtered
 
 
-
 class FilterElement(FortifyObjectifiedDataElement):
     def get_filter_query(self, fpr):
         query_object = None
@@ -206,13 +256,13 @@ class FilterTemplateElement(FortifyObjectifiedDataElement):
 
         return is_hidden
 
-    @property
+    @lazyproperty
     def default_filterset(self):
         # find the active FilterSet and get any rules that hide things
         # TODO: could allow caller to specify which filterset to use to toggle views of data
         default_filter_set = self.find(".//FilterSet[@enabled='true']")
         if default_filter_set is None:
-            eprint("Warning: no default filterset found!")
+            logger.warn("No default filterset found!")
 
         return default_filter_set
 
@@ -225,6 +275,7 @@ FVDL_NAMESPACE = FVDLObjectifiedElementNamespaceClassLookup.get_namespace(
 
 FILTERTEMPLATE_NAMESPACE = FilterTemplateObjectifiedElementNamespaceClassLookup.get_namespace(None)
 
+AUDIT_NAMESPACE['Audit'] = AuditElement
 AUDIT_NAMESPACE['CreationDate'] = DateTimeElement
 AUDIT_NAMESPACE['EditTime'] = DateTimeElement
 AUDIT_NAMESPACE['RemoveScanDate'] = DateTimeElement
@@ -240,6 +291,7 @@ FVDL_NAMESPACE['ModifiedTS'] = TimeStampElement
 FVDL_NAMESPACE['UUID'] = UUIDElement
 FVDL_NAMESPACE['Vulnerability'] = VulnerabilityElement
 FVDL_NAMESPACE['Rule'] = RuleElement
+FVDL_NAMESPACE['RuleInfo'] = RuleInfoElement
 
 FILTERTEMPLATE_NAMESPACE['FilterTemplate'] = FilterTemplateElement
 FILTERTEMPLATE_NAMESPACE['Filter'] = FilterElement
@@ -270,6 +322,7 @@ Audit = ElementMaker(
         'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
     }
 )
+
 
 def parse(source, **kwargs):
     return objectify.parse(source, parser=FVDLParser, **kwargs)

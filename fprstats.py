@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import argparse
+import logging
 
 from fortify import ProjectFactory
 
@@ -18,8 +19,24 @@ parser.add_argument("-s", "--vuln_summaries",
 parser.add_argument("--high_priority_only",
                     action="store_true", dest="print_high_priority_only", default=False,
                     help="For vulnerability summaries: Filters only High Priority relevant issues, which includes Critical/High and excludes anything suppressed, removed, hidden, NAI")
+parser.add_argument("-v", "--verbose", dest="verbose", required=False,
+                    action="store_true", help="print verbose/debug output")
 
 args = parser.parse_args()
+
+# create console handler with a higher log level
+logLevel = logging.DEBUG if args.verbose else logging.ERROR
+#logging.basicConfig(level=logLevel,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+logger = logging.getLogger(__name__)
+logger.setLevel(logLevel)
+consoleLogger = logging.StreamHandler()
+consoleLogger.setLevel(logLevel)
+consoleLogger.setFormatter(logging.Formatter(fmt='%(asctime)s %(name)-12s %(levelname)-8s %(message)s'))
+
+# add console logger to the root logger to cover all module loggers
+rootLogger = logging.getLogger()
+rootLogger.addHandler(consoleLogger)
+rootLogger.setLevel(logLevel)
 
 project = ProjectFactory.create_project(args.fprfile)
 

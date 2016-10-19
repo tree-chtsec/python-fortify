@@ -12,6 +12,9 @@ ExternalMetadataElementNamespaceClassLookup = ElementNamespaceClassLookup(
     ObjectifyElementClassLookup())
 
 class ExternalMetadataPackElement(FortifyObjectifiedDataElement):
+
+    metadata_name_shortcut_cache = {}
+
     @property
     def namespace_map(self):
         # lxml is really dumb with xml using default namespaces.  You have to define a dummy namespace prefix to the
@@ -20,8 +23,12 @@ class ExternalMetadataPackElement(FortifyObjectifiedDataElement):
 
     # in goes a metadata name and out comes a list of shortcuts for that name
     def get_shortcuts_for_name(self, name):
-        return self.xpath("./z:ExternalList[z:Name='%s']/z:Shortcut/text()" % name,
+        if name not in self.metadata_name_shortcut_cache:
+            self.metadata_name_shortcut_cache[name] = self.xpath("./z:ExternalList[z:Name='%s']/z:Shortcut/text()" % name,
                           namespaces=self.namespace_map)
+
+        return self.metadata_name_shortcut_cache[name]
+
 
 EXTERNALMETADATA_NAMESPACE = ExternalMetadataElementNamespaceClassLookup.get_namespace("xmlns://www.fortifysoftware.com/schema/externalMetadata")
 

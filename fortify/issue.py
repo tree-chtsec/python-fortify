@@ -1,5 +1,8 @@
 import os
 from decimal import *
+import logging
+
+logger = logging.getLogger(__name__)
 
 # object representing a Fortify issue
 class Issue:
@@ -52,11 +55,11 @@ class Issue:
     @property
     def hidden(self):
         # TODO: determine who should own issue visibility, especially since that can change by filters
-        return self.removed;
+        return self.removed
 
     @property
     def removed(self):
-       return 'analyzer' in self.metadata and self.metadata['analyzer'] == 'RemovedIssue'
+        return 'analyzer' in self.metadata and self.metadata['analyzer'] == 'RemovedIssue'
 
     @property
     def suppressed(self):
@@ -74,12 +77,14 @@ class Issue:
         self.metadata['confidence'] = Decimal(vulnerability.InstanceInfo.Confidence.pyval)
         if hasattr(vulnerability.InstanceInfo, 'MetaInfo'):
             # this probability takes precedence over rule probability
-            prob = vulnerability.InstanceInfo.MetaInfo.find("./x:Group[@name='Probability']", namespaces={'x':'xmlns://www.fortifysoftware.com/schema/fvdl'})
+            prob = vulnerability.InstanceInfo.MetaInfo.find("./x:Group[@name='Probability']", namespaces={
+                'x': 'xmlns://www.fortifysoftware.com/schema/fvdl'})
             if prob is not None:
                 self.metadata['probability'] = Decimal(prob.pyval)
 
         # /f:FVDL/f:Vulnerabilities/f:Vulnerability[2]/f:AnalysisInfo/f:Unified/f:Context
-        if hasattr(vulnerability.AnalysisInfo.Unified, "Trace") and hasattr(vulnerability.AnalysisInfo.Unified.Trace.Primary.Entry, "Node"):
+        if hasattr(vulnerability.AnalysisInfo.Unified, "Trace") and hasattr(
+                vulnerability.AnalysisInfo.Unified.Trace.Primary.Entry, "Node"):
             # This is more consistent with what Fortify shows, if available
             child = vulnerability.AnalysisInfo.Unified.Trace.Primary.Entry.Node.SourceLocation
             self.metadata['file'] = child.attrib['path']
@@ -138,20 +143,24 @@ class Issue:
         # - 'High' If Impact >=2.5 && Likelihood < 2.5.
         # - 'Medium' If Impact < 2.5 && Likelihood >= 2.5.
         # - 'Low' if impact < 2.5 && likelihood < 2.5.
-        impact = self.metadata['impact']
-        likelihood = self._likelihood()
-
         criticality = None
-        if impact >= 2.5 and likelihood >= 2.5:
-            #print "Rule ID [%s] Critical:  impact [%d], likelihood [%d], accuracy [%d], confidence [%d], probability[%d]" %
-            #    (self.id, impact, self._likelihood(), self.metadata['accuracy'], self.metadata['confidence'], self.metadata['probability'])
-            criticality = 'Critical'
-        elif impact >= 2.5 > likelihood:
-            criticality = 'High'
-        elif impact < 2.5 <= likelihood:
-            criticality = 'Medium'
-        elif impact < 2.5 and likelihood < 2.5:
-            criticality = 'Low'
+
+        if 'impact' in self.metadata:
+            impact = self.metadata['impact']
+            likelihood = self._likelihood()
+
+            if impact >= 2.5 and likelihood >= 2.5:
+                # print "Rule ID [%s] Critical:  impact [%d], likelihood [%d], accuracy [%d], confidence [%d], probability[%d]" %
+                #    (self.id, impact, self._likelihood(), self.metadata['accuracy'], self.metadata['confidence'], self.metadata['probability'])
+                criticality = 'Critical'
+            elif impact >= 2.5 > likelihood:
+                criticality = 'High'
+            elif impact < 2.5 <= likelihood:
+                criticality = 'Medium'
+            elif impact < 2.5 and likelihood < 2.5:
+                criticality = 'Low'
+        else:
+            logger.warn("Issue ID [%s] Missing Impact: %s : %s" % (self.id, self.type, self.subtype))
 
         return criticality
 
@@ -165,6 +174,7 @@ class Issue:
                        and not self.suppressed \
                        and not self.hidden
         return pci_relevant
+
 
 class RemovedIssue(Issue):
     @classmethod

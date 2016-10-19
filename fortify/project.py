@@ -1,6 +1,9 @@
 from __future__ import print_function
 from . import FPR, Issue, RemovedIssue
 import sys
+import logging
+
+logger = logging.getLogger(__name__)
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -18,13 +21,13 @@ class ProjectFactory:
         project = Project(fpr)
 
         # find every vulnerability and model as an Issue object attached to the project
+        logger.debug("Getting Vulnerabilities from FVDL")
         for vuln in fpr.FVDL.get_vulnerabilities():
             issue = Issue.from_vulnerability(vuln)
 
-            ruleinfo = fpr.FVDL.EngineData.RuleInfo.xpath("./x:Rule[@id='%s']" % vuln.ClassInfo.ClassID,
-                                                              namespaces={'x':'xmlns://www.fortifysoftware.com/schema/fvdl'})
-            if len(ruleinfo) > 0:
-                issue.add_metadata(ruleinfo[0].metadata)
+            rule = fpr.FVDL.EngineData.RuleInfo.get_rule(vuln.ClassInfo.ClassID)
+            if rule is not None and hasattr(rule, 'metadata'):
+                issue.add_metadata(rule.metadata)
 
             # now, we need to apply visibility rules from the filtertemplate, if one exists, for the
             if fpr.FilterTemplate is not None:
@@ -34,23 +37,26 @@ class ProjectFactory:
 
         # now, associate the analysis info with the issues we know about.
         # Only FPRs with audit information will have this to associate.
+        logger.debug("Getting Issues for project and setting suppressed and analysis data.")
         issues = project.get_issues()
+        logger.debug("Have to process %d issues." % len(issues))
+        # build lookup
+        fpr.Audit.build_issue_analysis_lookup()
         for issueid in issues:
 
             i = project.get_issue(issueid)
-            ai = fpr.Audit.find("./ns2:IssueList/ns2:Issue[@instanceId='%s']" % i.id, namespaces={'ns2':'xmlns://www.fortify.com/schema/audit'})
-            if ai is not None:
+            analysisInfo = fpr.Audit.get_issue_analysis(issueid)
+
+            if analysisInfo is not None:
                 # set suppressed status
-                i.suppressed = True if 'suppressed' in ai.attrib and ai.attrib['suppressed'] == 'true' else False
-                # This ideally depends on the project template I believe for what Tag values should be but hard-coding
-                # for now should be reasonably safe.
-                analysis = ai.find("./ns2:Tag[@id='87f2364f-dcd4-49e6-861d-f8d3f351686b']/ns2:Value", namespaces={'ns2':'xmlns://www.fortify.com/schema/audit'})
-                if analysis is not None:
-                    i.analysis = analysis.text
+                i.suppressed = analysisInfo['suppressed']
+                if analysisInfo['analysis'] is not None:
+                    i.analysis = analysisInfo['analysis']
 
             project.add_or_update_issue(i)  # add it back in to replace the previous one
 
         # now, add information about removed issues
+        logger.debug("Getting information about removed issues")
         if hasattr(fpr.Audit, 'IssueList') and hasattr(fpr.Audit.IssueList, 'RemovedIssue'):
             for removed in fpr.Audit.IssueList.RemovedIssue:
                 ri = RemovedIssue.from_auditxml(removed)
@@ -118,7 +124,7 @@ class Project:
             # exclude hidden, NAI and suppressed (TODO: could be configurable)
             if not (i.hidden or i.is_NAI() or i.suppressed):
                 if i.risk is None:
-                    eprint("Risk calculation error for issue [%s]" % i.id)
+                    logger.warn("Risk calculation error for issue [%s]" % i.id)
                 else:
                     vuln_counts[i.risk] += 1
 
@@ -127,11 +133,11 @@ class Project:
 
     def print_vuln_summaries(self, open_high_priority):
         # TODO: enable sorting by severity and file_line by default.
-        print("file_line,path,id,kingdom,type_subtype,severity,nai,filtered,suppressed,removed")
+        print("file_line,path,id,kingdom,type_subtype,severity,nai,filtered,suppressed,removed,analysis")
         for i in self._issues.itervalues():
             if not open_high_priority or i.is_open_high_priority:
-                print("%s:%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % \
-                      (i.metadata['shortfile'], i.metadata['line'], i.metadata['file'], i.id, i.kingdom, i.category, i.risk, i.is_NAI(), "H" if i.hidden else "V", i.suppressed, i.removed))
+                print("%s:%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % \
+                      (i.metadata['shortfile'], i.metadata['line'], i.metadata['file'], i.id, i.kingdom, i.category, i.risk, i.is_NAI(), "H" if i.hidden else "V", i.suppressed, i.removed, i.analysis))
 
     def get_fpr(self):
         return self._fpr

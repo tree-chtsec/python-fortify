@@ -12,7 +12,7 @@ class FPR(object):
     cache = {}
 
     def __init__(self, project, **kwargs):
-        if isinstance(project, basestring):
+        if isinstance(project, str):
             self._project = project = openfpr(project)
         elif isinstance(project, dict):
             self._project = project

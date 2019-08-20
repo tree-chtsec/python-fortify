@@ -7,13 +7,13 @@ logger = logging.getLogger(__name__)
 # object representing a Fortify issue
 class Issue:
     def __init__(self, iid, ruleid, kingdom, type, subtype):
+        self.metadata = {}
         self.id = iid  # instance ID
         self.ruleid = ruleid
         self.kingdom = kingdom
         self.type = type
         self.subtype = subtype
         self.suppressed = False
-        self.metadata = {}
 
     # Factory method to create an instance from a vulnerability XML object directly
     @classmethod

@@ -27,13 +27,13 @@ class lazyproperty(object):
 
     def __init__(self,fget):
         self.fget = fget
-        self.func_name = fget.__name__
+        self.__name__ = fget.__name__
 
     def __get__(self,obj,cls):
         if obj is None:
             return None
         value = self.fget(obj)
-        setattr(obj,self.func_name,value)
+        setattr(obj,self.__name__,value)
         return value
 
 AuditParser = objectify.makeparser(ns_clean=True,
@@ -113,11 +113,11 @@ class DateTimeElement(FortifyObjectifiedDataElement):
 class TimeStampElement(FortifyObjectifiedDataElement):
     @property
     def date(self):
-        return datetime.date(*map(int, self.get('date').split('-')))
+        return datetime.date(*list(map(int, self.get('date').split('-'))))
 
     @property
     def time(self):
-        return datetime.time(*map(int, self.get('time').split(':')))
+        return datetime.time(*list(map(int, self.get('time').split(':'))))
 
     @property
     def datetime(self):

@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 from . import FPR, Issue, RemovedIssue
 import sys
 import logging
@@ -62,10 +63,10 @@ class ProjectFactory:
                 ri = RemovedIssue.from_auditxml(removed)
                 project.add_or_update_issue(ri)
 
-        removedissues = [i for i in issues.values() if i.removed]
-        suppressedissues = [i for i in issues.values() if i.suppressed]
-        hiddenissues = [i for i in issues.values() if i.hidden]
-        naiissues = [i for i in issues.values() if i.is_NAI()]
+        removedissues = [i for i in list(issues.values()) if i.removed]
+        suppressedissues = [i for i in list(issues.values()) if i.suppressed]
+        hiddenissues = [i for i in list(issues.values()) if i.hidden]
+        naiissues = [i for i in list(issues.values()) if i.is_NAI()]
         eprint("Got [%d] issues, [%d] hidden, [%d] NAI, [%d] Suppressed, [%d] Removed" % (len(issues), len(hiddenissues), len(naiissues), len(suppressedissues), len(removedissues)))
 
         return project  # A fortify project, containing one or more issues, with metadata
@@ -120,7 +121,7 @@ class Project:
                         'Medium': 0,
                         'Low': 0,
                         }
-        for i in self._issues.values():
+        for i in list(self._issues.values()):
             # exclude hidden, NAI and suppressed (TODO: could be configurable)
             if not (i.hidden or i.is_NAI() or i.suppressed):
                 if i.risk is None:
@@ -134,7 +135,7 @@ class Project:
     def print_vuln_summaries(self, open_high_priority):
         # TODO: enable sorting by severity and file_line by default.
         print("file_line,path,id,kingdom,type_subtype,severity,nai,filtered,suppressed,removed,analysis")
-        for i in self._issues.itervalues():
+        for i in self._issues.values():
             if not open_high_priority or i.is_open_high_priority:
                 print("%s:%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % \
                       (i.metadata['shortfile'], i.metadata['line'], i.metadata['file'], i.id, i.kingdom, i.category, i.risk, i.is_NAI(), "H" if i.hidden else "V", i.suppressed, i.removed, i.analysis))

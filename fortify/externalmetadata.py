@@ -1,7 +1,7 @@
 from lxml.etree import ElementNamespaceClassLookup
 from lxml.objectify import ObjectifyElementClassLookup, ElementMaker, ObjectifiedElement
 from lxml import objectify
-from fvdl import FortifyObjectifiedDataElement
+from .fvdl import FortifyObjectifiedDataElement
 
 ExternalMetadataParser = objectify.makeparser(ns_clean=True,
                                               remove_blank_text=True,

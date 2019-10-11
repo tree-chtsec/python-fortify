@@ -57,6 +57,13 @@ class Issue:
         # TODO: determine who should own issue visibility, especially since that can change by filters
         return self.removed
 
+    @hidden.setter
+    def hidden(self, h):
+        if h:
+            self.metadata['analyzer'] = 'RemovedIssue'
+        elif 'analyzer' in self.metadata:
+            del self.metadata['analyzer']
+
     @property
     def removed(self):
         return 'analyzer' in self.metadata and self.metadata['analyzer'] == 'RemovedIssue'

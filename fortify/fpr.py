@@ -21,8 +21,11 @@ class FPR(object):
 
         self.FVDL = project['audit.fvdl'].getroot()
         self.cache[self.FVDL] = list(self.FVDL.iter())
-        self.Audit = project['audit.xml'].getroot()
-        self.cache[self.Audit] = list(self.Audit.iter())
+        if 'audit.xml' in project:
+            self.Audit = project['audit.xml'].getroot()
+            self.cache[self.Audit] = list(self.Audit.iter())
+        else:
+            self.Audit=None
 
         self.FilterTemplate=None
 

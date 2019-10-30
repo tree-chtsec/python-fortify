@@ -42,19 +42,20 @@ class ProjectFactory:
         issues = project.get_issues()
         logger.debug("Have to process %d issues." % len(issues))
         # build lookup
-        fpr.Audit.build_issue_analysis_lookup()
-        for issueid in issues:
+        if fpr.Audit:
+            fpr.Audit.build_issue_analysis_lookup()
+            for issueid in issues:
 
-            i = project.get_issue(issueid)
-            analysisInfo = fpr.Audit.get_issue_analysis(issueid)
+                i = project.get_issue(issueid)
+                analysisInfo = fpr.Audit.get_issue_analysis(issueid)
 
-            if analysisInfo is not None:
-                # set suppressed status
-                i.suppressed = analysisInfo['suppressed']
-                if analysisInfo['analysis'] is not None:
-                    i.analysis = analysisInfo['analysis']
+                if analysisInfo is not None:
+                    # set suppressed status
+                    i.suppressed = analysisInfo['suppressed']
+                    if analysisInfo['analysis'] is not None:
+                        i.analysis = analysisInfo['analysis']
 
-            project.add_or_update_issue(i)  # add it back in to replace the previous one
+                project.add_or_update_issue(i)  # add it back in to replace the previous one
 
         # now, add information about removed issues
         logger.debug("Getting information about removed issues")
@@ -78,12 +79,12 @@ class Project:
         self._issues = {}
 
         # set project properties
-        if hasattr(fpr.Audit.ProjectInfo, 'Name'):
-            self.ProjectName=fpr.Audit.ProjectInfo.Name
+        if fpr.Audit and hasattr(fpr.Audit.ProjectInfo, 'Name'):
+                self.ProjectName=fpr.Audit.ProjectInfo.Name
         else:
             self.ProjectName=None
 
-        if hasattr(fpr.Audit.ProjectInfo, 'ProjectVersionId'):
+        if fpr.Audit and hasattr(fpr.Audit.ProjectInfo, 'ProjectVersionId'):
             self.ProjectVersionId=fpr.Audit.ProjectInfo.ProjectVersionId
         else:
             self.ProjectVersionId=None

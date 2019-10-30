@@ -15,6 +15,9 @@ class Issue:
         self.subtype = subtype
         self.suppressed = False
 
+    def __str__(self):
+        return "{iid}::{ruleid}::{type}::{subtype}".format(iid=self.id, ruleid=self.ruleid, type=self.type, subtype=self.subtype)
+
     # Factory method to create an instance from a vulnerability XML object directly
     @classmethod
     def from_vulnerability(cls, vulnerability):

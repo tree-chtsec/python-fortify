@@ -42,7 +42,7 @@ class ProjectFactory:
         issues = project.get_issues()
         logger.debug("Have to process %d issues." % len(issues))
         # build lookup
-        if fpr.Audit:
+        if fpr.Audit is not None:
             fpr.Audit.build_issue_analysis_lookup()
             for issueid in issues:
 
@@ -79,12 +79,12 @@ class Project:
         self._issues = {}
 
         # set project properties
-        if fpr.Audit and hasattr(fpr.Audit.ProjectInfo, 'Name'):
-                self.ProjectName=fpr.Audit.ProjectInfo.Name
+        if fpr.Audit is not None and hasattr(fpr.Audit.ProjectInfo, 'Name'):
+            self.ProjectName=fpr.Audit.ProjectInfo.Name
         else:
             self.ProjectName=None
 
-        if fpr.Audit and hasattr(fpr.Audit.ProjectInfo, 'ProjectVersionId'):
+        if fpr.Audit is not None and hasattr(fpr.Audit.ProjectInfo, 'ProjectVersionId'):
             self.ProjectVersionId=fpr.Audit.ProjectInfo.ProjectVersionId
         else:
             self.ProjectVersionId=None
